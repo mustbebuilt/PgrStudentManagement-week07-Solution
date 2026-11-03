@@ -14,19 +14,19 @@ Both diagrams use consistent participant and port names to illustrate how replac
 sequenceDiagram
     autonumber
     actor Client as REST Client
-    participant SupCtrl as AcademicSupervisorsApiController<br/>(Adapters.API)
-    participant SupPort as IAssignAcademicSupervisorUseCase<br/>(Business Input Port)
-    participant SupUC as AssignAcademicSupervisorUseCase<br/>(Academic Supervisors Business)
-    participant LookupPort as IStudentLookup<br/>(Academic Supervisors Output Port)
-    participant LocalAdapter as LocalStudentLookupAdapter<br/>(In-Process Adapter)
-    participant StuPort as IGetStudentSummaryUseCase<br/>(Students Input Port)
-    participant StuUC as GetStudentSummaryUseCase<br/>(Students Business)
-    participant StuGwPort as IStudentGateway<br/>(Students Output Port)
-    participant StuGw as EfStudentGateway<br/>(Adapters.Persistence)
-    participant DbCtx as StudentManagementDbContext<br/>(EF Core)
+    participant SupCtrl as AcademicSupervisorsApiController (Adapters.API)
+    participant SupPort as IAssignAcademicSupervisorUseCase (Input Port)
+    participant SupUC as AssignAcademicSupervisorUseCase (Academic Supervisors Business)
+    participant LookupPort as IStudentLookup (Academic Supervisors Output Port)
+    participant LocalAdapter as LocalStudentLookupAdapter (In-Process Adapter)
+    participant StuPort as IGetStudentSummaryUseCase (Students Input Port)
+    participant StuUC as GetStudentSummaryUseCase (Students Business)
+    participant StuGwPort as IStudentGateway (Students Output Port)
+    participant StuGw as EfStudentGateway (Adapters.Persistence)
+    participant DbCtx as StudentManagementDbContext (EF Core)
     database SQLite as SQLite Database
 
-    Client->>SupCtrl: POST /api/students/{studentNumber}/academic-supervisors
+    Client->>SupCtrl: POST /api/students/:studentNumber/academic-supervisors
     SupCtrl->>SupPort: ExecuteAsync(AssignAcademicSupervisorInput)
     SupPort->>SupUC: ExecuteAsync(input)
 
@@ -44,9 +44,9 @@ sequenceDiagram
         SQLite-->>DbCtx: StudentRecord row
         DbCtx-->>StuGw: StudentRecord
         StuGw-->>StuUC: Student (Domain)
-        StuUC-->>LocalAdapter: GetStudentSummaryOutput(Found: true, DisplayName)
+        StuUC-->>LocalAdapter: GetStudentSummaryOutput(Found = true, DisplayName)
         LocalAdapter-->>SupUC: StudentSummary(StudentNumber, DisplayName)
-        Note over SupUC,SQLite: Validate supervisor & current assignments via IAcademicSupervisorGateway
+        Note over SupUC,SQLite: Validate supervisor and current assignments via IAcademicSupervisorGateway
         SupUC->>DbCtx: INSERT INTO SupervisoryAssignments ...
         DbCtx->>SQLite: INSERT row
         SupUC-->>SupCtrl: AssignAcademicSupervisorResult(AssignmentOutcome.Created)
@@ -55,10 +55,10 @@ sequenceDiagram
         SQLite-->>DbCtx: No row
         DbCtx-->>StuGw: null
         StuGw-->>StuUC: null
-        StuUC-->>LocalAdapter: GetStudentSummaryOutput(Found: false, null)
+        StuUC-->>LocalAdapter: GetStudentSummaryOutput(Found = false, null)
         LocalAdapter-->>SupUC: null
         SupUC-->>SupCtrl: AssignAcademicSupervisorResult(AssignmentOutcome.StudentNotFound)
-        SupCtrl-->>Client: 404 Not Found (outcome: "StudentNotFound")
+        SupCtrl-->>Client: 404 Not Found (Outcome = StudentNotFound)
     end
 ```
 
@@ -70,20 +70,20 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     actor Client as REST Client
-    participant SupCtrl as AcademicSupervisorsApiController<br/>(Adapters.API)
-    participant SupPort as IAssignAcademicSupervisorUseCase<br/>(Business Input Port)
-    participant SupUC as AssignAcademicSupervisorUseCase<br/>(Academic Supervisors Business)
-    participant LookupPort as IStudentLookup<br/>(Academic Supervisors Output Port)
-    participant HttpAdapter as HttpStudentLookupAdapter<br/>(Adapters.API Outgoing HTTP Client)
-    participant StuCtrl as StudentsApiController<br/>(Adapters.API Incoming REST)
-    participant StuPort as IGetStudentSummaryUseCase<br/>(Students Input Port)
-    participant StuUC as GetStudentSummaryUseCase<br/>(Students Business)
-    participant StuGwPort as IStudentGateway<br/>(Students Output Port)
-    participant StuGw as EfStudentGateway<br/>(Adapters.Persistence)
-    participant DbCtx as StudentManagementDbContext<br/>(EF Core)
+    participant SupCtrl as AcademicSupervisorsApiController (Adapters.API)
+    participant SupPort as IAssignAcademicSupervisorUseCase (Input Port)
+    participant SupUC as AssignAcademicSupervisorUseCase (Academic Supervisors Business)
+    participant LookupPort as IStudentLookup (Academic Supervisors Output Port)
+    participant HttpAdapter as HttpStudentLookupAdapter (Adapters.API Outgoing HTTP Client)
+    participant StuCtrl as StudentsApiController (Adapters.API Incoming REST)
+    participant StuPort as IGetStudentSummaryUseCase (Students Input Port)
+    participant StuUC as GetStudentSummaryUseCase (Students Business)
+    participant StuGwPort as IStudentGateway (Students Output Port)
+    participant StuGw as EfStudentGateway (Adapters.Persistence)
+    participant DbCtx as StudentManagementDbContext (EF Core)
     database SQLite as SQLite Database
 
-    Client->>SupCtrl: POST /api/students/{studentNumber}/academic-supervisors
+    Client->>SupCtrl: POST /api/students/:studentNumber/academic-supervisors
     SupCtrl->>SupPort: ExecuteAsync(AssignAcademicSupervisorInput)
     SupPort->>SupUC: ExecuteAsync(input)
 
@@ -91,8 +91,8 @@ sequenceDiagram
     SupUC->>LookupPort: GetStudentSummaryAsync(studentNumber)
     LookupPort->>HttpAdapter: GetStudentSummaryAsync(studentNumber)
 
-    Note over HttpAdapter,StuCtrl: Cross-module HTTP boundary (GET /api/students/{studentNumber}/lookup)
-    HttpAdapter->>StuCtrl: HTTP GET /api/students/{studentNumber}/lookup
+    Note over HttpAdapter,StuCtrl: Cross-module HTTP boundary (GET /api/students/:studentNumber/lookup)
+    HttpAdapter->>StuCtrl: HTTP GET /api/students/:studentNumber/lookup
     StuCtrl->>StuPort: ExecuteAsync(GetStudentSummaryInput)
     StuPort->>StuUC: ExecuteAsync(input)
     StuUC->>StuGwPort: GetByStudentNumberAsync(studentNumber)
@@ -104,10 +104,10 @@ sequenceDiagram
         SQLite-->>DbCtx: StudentRecord row
         DbCtx-->>StuGw: StudentRecord
         StuGw-->>StuUC: Student (Domain)
-        StuUC-->>StuCtrl: GetStudentSummaryOutput(Found: true, DisplayName)
-        StuCtrl-->>HttpAdapter: 200 OK JSON {"studentNumber": "...", "displayName": "..."}
+        StuUC-->>StuCtrl: GetStudentSummaryOutput(Found = true, DisplayName)
+        StuCtrl-->>HttpAdapter: 200 OK JSON (StudentLookupResponse)
         HttpAdapter-->>SupUC: StudentSummary(StudentNumber, DisplayName)
-        Note over SupUC,SQLite: Validate supervisor & current assignments via IAcademicSupervisorGateway
+        Note over SupUC,SQLite: Validate supervisor and current assignments via IAcademicSupervisorGateway
         SupUC->>DbCtx: INSERT INTO SupervisoryAssignments ...
         DbCtx->>SQLite: INSERT row
         SupUC-->>SupCtrl: AssignAcademicSupervisorResult(AssignmentOutcome.Created)
@@ -116,12 +116,12 @@ sequenceDiagram
         SQLite-->>DbCtx: No row
         DbCtx-->>StuGw: null
         StuGw-->>StuUC: null
-        StuUC-->>StuCtrl: GetStudentSummaryOutput(Found: false, null)
+        StuUC-->>StuCtrl: GetStudentSummaryOutput(Found = false, null)
         StuCtrl-->>HttpAdapter: 404 Not Found
         HttpAdapter-->>SupUC: null
         SupUC-->>SupCtrl: AssignAcademicSupervisorResult(AssignmentOutcome.StudentNotFound)
-        SupCtrl-->>Client: 404 Not Found (outcome: "StudentNotFound")
-    else Endpoint Unavailable / 5xx Failure
+        SupCtrl-->>Client: 404 Not Found (Outcome = StudentNotFound)
+    else Endpoint Unavailable or 5xx Failure
         HttpAdapter--xSupUC: Throws HttpRequestException (not treated as StudentNotFound)
         SupCtrl-->>Client: 500 Internal Server Error / Service Failure
     end

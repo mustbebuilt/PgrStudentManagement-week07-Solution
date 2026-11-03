@@ -18,30 +18,30 @@ The system strictly adheres to Robert C. Martin's **Dependency Rule**:
 ```mermaid
 graph TD
     subgraph Incoming ["Incoming Adapters (Drivers)"]
-        Web["Adapters.Web<br/>(MVC Controllers & Razor Views)"]
-        Api["Adapters.API<br/>(REST Controllers & DTOs)"]
+        Web["Adapters.Web (MVC Controllers & Razor Views)"]
+        Api["Adapters.API (REST Controllers & DTOs)"]
     end
 
     subgraph Core ["Application Core (Enterprise & Application Logic)"]
-        Business["PgrStudentManagement.Business<br/>(Use Cases, Input Ports & Output Ports)"]
-        Domain["PgrStudentManagement.Domain<br/>(Entities & Enums)"]
+        Business["PgrStudentManagement.Business (Use Cases, Input & Output Ports)"]
+        Domain["PgrStudentManagement.Domain (Entities & Enums)"]
     end
 
     subgraph Outgoing ["Outgoing Adapters (Driven)"]
-        Persistence["Adapters.Persistence<br/>(EF Core SQLite & MongoDB Gateways)"]
-        HttpLookup["Adapters.API / StudentLookupClient<br/>(HttpStudentLookupAdapter)"]
+        Persistence["Adapters.Persistence (EF Core SQLite & MongoDB Gateways)"]
+        HttpLookup["Adapters.API / StudentLookupClient (HttpStudentLookupAdapter)"]
     end
 
     subgraph Host ["Composition Root"]
-        App["PgrStudentManagement.Application<br/>(Startup, DI, Configuration, Host)"]
+        App["PgrStudentManagement.Application (Startup, DI, Configuration, Host)"]
     end
 
-    Web -->|Calls Input Port| Business
-    Api -->|Calls Input Port| Business
-    Business -->|Manipulates| Domain
-    Persistence -.->|Implements Output Port| Business
-    HttpLookup -.->|Implements IStudentLookup| Business
-    HttpLookup -->|HTTP GET /api/students/{id}/lookup| Api
+    Web -->|"Calls Input Port"| Business
+    Api -->|"Calls Input Port"| Business
+    Business -->|"Manipulates"| Domain
+    Persistence -.->|"Implements Output Port"| Business
+    HttpLookup -.->|"Implements IStudentLookup"| Business
+    HttpLookup -->|"HTTP GET /api/students/:id/lookup"| Api
 
     App --> Web
     App --> Api
