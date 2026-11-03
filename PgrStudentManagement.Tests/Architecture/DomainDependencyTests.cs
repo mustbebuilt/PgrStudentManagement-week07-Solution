@@ -55,4 +55,49 @@ public class DomainDependencyTests
             "PgrStudentManagement.Application",
             referencedAssemblies);
     }
+
+    [Fact]
+    public void BusinessAssembly_DoesNotReferenceOuterFrameworksOrAdapters()
+    {
+        var assembly = typeof(PgrStudentManagement.Business.AcademicSupervisors.AssignAcademicSupervisor.AssignAcademicSupervisorUseCase).Assembly;
+
+        var referencedAssemblies = assembly
+            .GetReferencedAssemblies()
+            .Select(reference => reference.Name)
+            .Where(name => name is not null)
+            .Cast<string>()
+            .ToHashSet(StringComparer.Ordinal);
+
+        Assert.DoesNotContain(
+            referencedAssemblies,
+            name => name.StartsWith(
+                "Microsoft.EntityFrameworkCore",
+                StringComparison.Ordinal));
+
+        Assert.DoesNotContain(
+            referencedAssemblies,
+            name => name.StartsWith(
+                "Microsoft.AspNetCore",
+                StringComparison.Ordinal));
+
+        Assert.DoesNotContain(
+            "System.Net.Http",
+            referencedAssemblies);
+
+        Assert.DoesNotContain(
+            "PgrStudentManagement.Adapters.Persistence",
+            referencedAssemblies);
+
+        Assert.DoesNotContain(
+            "PgrStudentManagement.Adapters.Web",
+            referencedAssemblies);
+
+        Assert.DoesNotContain(
+            "PgrStudentManagement.Adapters.API",
+            referencedAssemblies);
+
+        Assert.DoesNotContain(
+            "PgrStudentManagement.Application",
+            referencedAssemblies);
+    }
 }

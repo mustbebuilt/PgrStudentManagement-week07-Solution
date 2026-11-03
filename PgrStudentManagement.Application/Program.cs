@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
+using PgrStudentManagement.Adapters.API.AcademicSupervisors.StudentLookupClient;
 using PgrStudentManagement.Adapters.API.Controllers;
 using PgrStudentManagement.Adapters.API.Mappers;
 using PgrStudentManagement.Adapters.Persistence.Documents.Gateway;
@@ -9,10 +10,14 @@ using PgrStudentManagement.Adapters.Persistence.Relational.Gateway;
 using PgrStudentManagement.Adapters.Persistence.Relational.Mappers;
 using PgrStudentManagement.Adapters.Web.Controllers;
 using PgrStudentManagement.Adapters.Web.Mappers;
+using PgrStudentManagement.Business.AcademicSupervisors.AssignAcademicSupervisor;
+using PgrStudentManagement.Business.AcademicSupervisors.Gateway;
+using PgrStudentManagement.Business.AcademicSupervisors.ViewSupervisoryTeam;
 using PgrStudentManagement.Business.ResearchActivities.Gateway;
 using PgrStudentManagement.Business.ResearchActivities.RecordResearchActivity;
 using PgrStudentManagement.Business.ResearchActivities.ViewStudentResearchActivities;
 using PgrStudentManagement.Business.Students.Gateway;
+using PgrStudentManagement.Business.Students.GetStudentSummary;
 using PgrStudentManagement.Business.Students.ViewStudentEnrolments;
 using PgrStudentManagement.Domain.ResearchActivities;
 
@@ -39,20 +44,45 @@ if (!string.IsNullOrWhiteSpace(mongoConnectionString))
 
 // Register mappers
 builder.Services.AddSingleton<EnrolmentPersistenceMapper>();
+builder.Services.AddSingleton<StudentPersistenceMapper>();
+builder.Services.AddSingleton<AcademicSupervisorPersistenceMapper>();
 builder.Services.AddSingleton<StudentEnrolmentsWebMapper>();
 builder.Services.AddSingleton<StudentEnrolmentsApiMapper>();
+builder.Services.AddSingleton<StudentLookupApiMapper>();
+builder.Services.AddSingleton<AcademicSupervisorsApiMapper>();
 builder.Services.AddSingleton<ResearchActivityDocumentMapper>();
 builder.Services.AddSingleton<ResearchActivityWebMapper>();
 builder.Services.AddSingleton<ResearchActivityApiMapper>();
 
 // Register gateways (output ports)
 builder.Services.AddScoped<IEnrolmentGateway, EfEnrolmentGateway>();
+builder.Services.AddScoped<IStudentGateway, EfStudentGateway>();
+builder.Services.AddScoped<IAcademicSupervisorGateway, EfAcademicSupervisorGateway>();
 builder.Services.AddScoped<IResearchActivityGateway, MongoResearchActivityGateway>();
+
+// Register seeders
+builder.Services.AddScoped<AcademicSupervisorDataSeeder>();
 
 // Register use cases (input ports)
 builder.Services.AddScoped<IViewStudentEnrolmentsUseCase, ViewStudentEnrolmentsUseCase>();
+builder.Services.AddScoped<IGetStudentSummaryUseCase, GetStudentSummaryUseCase>();
+builder.Services.AddScoped<IAssignAcademicSupervisorUseCase, AssignAcademicSupervisorUseCase>();
+builder.Services.AddScoped<IViewSupervisoryTeamUseCase, ViewSupervisoryTeamUseCase>();
 builder.Services.AddScoped<IRecordResearchActivityUseCase, RecordResearchActivityUseCase>();
 builder.Services.AddScoped<IViewStudentResearchActivitiesUseCase, ViewStudentResearchActivitiesUseCase>();
+
+// Part 1 registration (direct in-process Student lookup):
+// builder.Services.AddScoped<IStudentLookup, LocalStudentLookupAdapter>();
+
+// Part 2 registration (cross-module HTTP Student lookup):
+var studentsBaseUrl = builder.Configuration["Services:Students:BaseUrl"]
+    ?? throw new InvalidOperationException(
+        "The Students service base URL is not configured.");
+
+builder.Services.AddHttpClient<IStudentLookup, HttpStudentLookupAdapter>(client =>
+{
+    client.BaseAddress = new Uri(studentsBaseUrl);
+});
 
 // Register MVC and API controllers from adapter assemblies
 builder.Services
@@ -62,12 +92,15 @@ builder.Services
 
 var app = builder.Build();
 
-// Ensure relational database exists and is seeded
+// Ensure relational database is migrated and seeded
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<StudentManagementDbContext>();
-    await context.Database.EnsureCreatedAsync();
+    await context.Database.MigrateAsync();
     await DatabaseSeeder.SeedAsync(context);
+
+    var supervisorSeeder = scope.ServiceProvider.GetRequiredService<AcademicSupervisorDataSeeder>();
+    await supervisorSeeder.SeedAsync();
 
     // Seed sample research activities
     var activityGateway = scope.ServiceProvider.GetRequiredService<IResearchActivityGateway>();
@@ -118,3 +151,5 @@ app.MapControllerRoute(
 app.MapControllers();
 
 app.Run();
+
+public partial class Program;
