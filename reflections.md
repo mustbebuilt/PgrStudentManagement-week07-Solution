@@ -24,7 +24,7 @@ sequenceDiagram
     participant StuGwPort as IStudentGateway (Students Output Port)
     participant StuGw as EfStudentGateway (Adapters.Persistence)
     participant DbCtx as StudentManagementDbContext (EF Core)
-    database SQLite as SQLite Database
+    participant SQLite as SQLite Database
 
     Client->>SupCtrl: POST /api/students/:studentNumber/academic-supervisors
     SupCtrl->>SupPort: ExecuteAsync(AssignAcademicSupervisorInput)
@@ -81,7 +81,7 @@ sequenceDiagram
     participant StuGwPort as IStudentGateway (Students Output Port)
     participant StuGw as EfStudentGateway (Adapters.Persistence)
     participant DbCtx as StudentManagementDbContext (EF Core)
-    database SQLite as SQLite Database
+    participant SQLite as SQLite Database
 
     Client->>SupCtrl: POST /api/students/:studentNumber/academic-supervisors
     SupCtrl->>SupPort: ExecuteAsync(AssignAcademicSupervisorInput)
